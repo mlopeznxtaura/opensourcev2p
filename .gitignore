@@ -1,0 +1,7 @@
+.acme/
+.pytest_cache/
+__pycache__/
+*.pyc
+.env
+*.key
+*.pem

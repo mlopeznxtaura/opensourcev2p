@@ -1,0 +1,7 @@
+name = "nextaura-app2"
+main = "app2-proxy.js"
+compatibility_date = "2026-06-02"
+
+routes = [
+  { pattern = "app2.nextaura.fit/*", zone_name = "nextaura.fit" },
+]
