@@ -331,7 +331,7 @@ def root():
       <div class="app">
         <div class="header">
           <div>
-            <p class="subtitle">Capture voice or text input and transform it into concise action plans for pastoral care, project execution, or safety reporting.</p>
+            <p class="subtitle">Capture voice or text input and transform it into action plans for pastoral care, project execution, safety reporting, or sales call research.</p>
           </div>
         </div>
         <div class="input-wrap">
@@ -340,6 +340,7 @@ def root():
             <option value="pastoral_confession">Private Pastoral Confessions -> Action Plans</option>
             <option value="project_management">Project Management -> Execution Plans</option>
             <option value="manufacturing_safety">Manufacturing Safety Reporting -> Corrective Plans</option>
+            <option value="sales_research">Sales Pitches &amp; Calls -> Research Follow-Ups</option>
           </select>
           <h2 style="margin-top:14px">Input</h2>
           <textarea id="transcript" placeholder="Speak with mic or paste transcript..."></textarea>
@@ -359,7 +360,7 @@ def root():
           <div class="box">
             <h3>Problem Statement</h3>
             <p id="problem">No plan generated yet.</p>
-            <p><strong>Risk:</strong> <span id="risk">-</span></p>
+            <p><strong id="riskLabel">Risk:</strong> <span id="risk">-</span></p>
             <p><strong>Summary:</strong> <span id="summary">-</span></p>
           </div>
           <div class="grid" style="margin-top:14px;">
@@ -502,10 +503,18 @@ def root():
           placeholder: "Describe the incident, hazard, location, equipment, and who was involved...",
           emptyMsg: "Please capture or type a safety report first.",
         },
+        sales_research: {
+          placeholder: "Paste a discovery call, pitch, or follow-up — include outcome, spend, product fit, and objections...",
+          emptyMsg: "Please capture or type a sales call transcript first.",
+        },
       };
       function applyModeUi() {
         const cfg = MODE_UI[modeSelect.value] || MODE_UI.pastoral_confession;
         transcriptEl.placeholder = cfg.placeholder;
+        const riskLabel = document.getElementById("riskLabel");
+        if (riskLabel) {
+          riskLabel.textContent = modeSelect.value === "sales_research" ? "Opportunity:" : "Risk:";
+        }
       }
       modeSelect.addEventListener("change", applyModeUi);
       applyModeUi();
@@ -611,7 +620,8 @@ def export_pdf(body: PlanIn):
     write_line(f"Mode: {body.mode}")
     write_line(f"Problem Statement: {plan['problem_statement']}")
     pdf.ln(2)
-    write_line(f"Risk Level: {plan['risk_level']}")
+    level_label = "Opportunity Level" if body.mode == "sales_research" else "Risk Level"
+    write_line(f"{level_label}: {plan['risk_level']}")
     write_line(f"Summary: {plan['summary']}")
     pdf.ln(2)
     pdf.set_font("Helvetica", "B", 12)
