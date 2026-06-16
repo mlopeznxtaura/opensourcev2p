@@ -26,3 +26,32 @@ def test_build_plan_chronic_habit_support_case():
     assert any("24 years" in x.lower() for x in out["risk_flags"])
     assert any("resource request" in x.lower() for x in out["risk_flags"])
     assert out["tally"]["total_actions"] >= 7
+
+
+def test_project_management_mode():
+    out = planner.build_plan(
+        "We are behind schedule on the Q2 milestone. A vendor delay is blocking "
+        "integration and the client wants a stakeholder update.",
+        mode="project_management",
+    )
+    assert "project" in out["problem_statement"].lower()
+    assert out["risk_level"] in {"low", "moderate", "high"}
+    assert any("blocker" in x.lower() or "milestone" in x.lower() for x in out["plan"]["immediate"])
+    assert not any("confession" in x.lower() for x in out["plan"]["immediate"])
+
+
+def test_manufacturing_safety_mode():
+    out = planner.build_plan(
+        "Near miss on line 3: forklift almost hit a pedestrian. No injury but "
+        "PPE was missing and machine guarding looked unsafe.",
+        mode="manufacturing_safety",
+    )
+    assert "safety" in out["problem_statement"].lower()
+    assert out["risk_level"] in {"moderate", "high"}
+    assert any("supervisor" in x.lower() or "area" in x.lower() for x in out["plan"]["immediate"])
+    assert not any("prayer" in x.lower() for x in out["plan"]["immediate"])
+
+
+def test_mode_title():
+    assert planner.mode_title("project_management") == "Project Execution Plan"
+    assert planner.mode_title("manufacturing_safety") == "Manufacturing Safety Corrective Plan"

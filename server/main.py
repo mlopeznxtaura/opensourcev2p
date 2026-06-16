@@ -489,10 +489,31 @@ def root():
         if (recognition) recognition.stop();
         status("Mic stopped.", false);
       }
+      const MODE_UI = {
+        pastoral_confession: {
+          placeholder: "Speak with mic or paste a pastoral confession summary...",
+          emptyMsg: "Please capture or type confession text first.",
+        },
+        project_management: {
+          placeholder: "Describe project status, blockers, deadlines, and stakeholders...",
+          emptyMsg: "Please capture or type project update text first.",
+        },
+        manufacturing_safety: {
+          placeholder: "Describe the incident, hazard, location, equipment, and who was involved...",
+          emptyMsg: "Please capture or type a safety report first.",
+        },
+      };
+      function applyModeUi() {
+        const cfg = MODE_UI[modeSelect.value] || MODE_UI.pastoral_confession;
+        transcriptEl.placeholder = cfg.placeholder;
+      }
+      modeSelect.addEventListener("change", applyModeUi);
+      applyModeUi();
       async function generatePlan() {
         const transcript = document.getElementById("transcript").value.trim();
+        const cfg = MODE_UI[modeSelect.value] || MODE_UI.pastoral_confession;
         if (!transcript) {
-          status("Please capture or type confession text first.", false);
+          status(cfg.emptyMsg, false);
           return;
         }
         status("Generating plan...", true);
@@ -553,14 +574,14 @@ def root():
 
 @app.post("/v1/plan")
 def voice_to_plan(body: PlanIn):
-    plan = planner.build_plan(body.transcript)
+    plan = planner.build_plan(body.transcript, body.mode)
     plan["mode"] = body.mode
     return plan
 
 
 @app.post("/v1/export/jsonl")
 def export_jsonl(body: PlanIn):
-    plan = planner.build_plan(body.transcript)
+    plan = planner.build_plan(body.transcript, body.mode)
     payload = {
         "type": "structured_action_plan",
         "mode": body.mode,
@@ -574,7 +595,7 @@ def export_jsonl(body: PlanIn):
 
 @app.post("/v1/export/pdf")
 def export_pdf(body: PlanIn):
-    plan = planner.build_plan(body.transcript)
+    plan = planner.build_plan(body.transcript, body.mode)
     pdf = FPDF()
     pdf.set_auto_page_break(auto=True, margin=12)
     pdf.add_page()
@@ -585,7 +606,7 @@ def export_pdf(body: PlanIn):
         pdf.multi_cell(content_w, height, text)
 
     pdf.set_font("Helvetica", "B", 16)
-    pdf.cell(0, 10, "Pastoral Action Plan", new_x="LMARGIN", new_y="NEXT")
+    pdf.cell(0, 10, planner.mode_title(body.mode), new_x="LMARGIN", new_y="NEXT")
     pdf.set_font("Helvetica", "", 11)
     write_line(f"Mode: {body.mode}")
     write_line(f"Problem Statement: {plan['problem_statement']}")
